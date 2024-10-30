@@ -1,6 +1,8 @@
 # Code Smells CLI
 
-A command-line tool that uses Claude AI to analyze your code changes for potential code smells and software engineering best practices violations. Get instant feedback on your commits and pull requests!
+A command-line tool that uses AI to analyze your code changes for potential code smells and software engineering best practices violations. Get instant feedback on your commits and pull requests.
+
+The tool uses the principles and red flags from a [Philosophy of Software Design by John K. Ousterhout](https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201) to evaluate your code.
 
 ## Features
 
