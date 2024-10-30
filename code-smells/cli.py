@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.tree import Tree
 from rich.markdown import Markdown
 from .constants import SYSTEM_PROMPT
+from .git_utils import get_staged_changes, get_diff, get_current_branch
 
 
 def get_api_key() -> str:
@@ -97,6 +98,28 @@ def format_output(analysis: CodeSmellAnalysis, console: Console):
         )
     )
 
+def generate_analysis(console, client, diff):
+    formatted_prompt = SYSTEM_PROMPT.replace("{{GIT_DIFF}}", diff)
+    try:
+        response = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                temperature=0,
+                messages=[{"role": "user", "content": formatted_prompt}],
+            )
+
+            # Extract the XML output from the response
+        pattern = r"<output>(.*?)</output>"
+        match = re.search(pattern, response.content[0].text, re.DOTALL)
+        if not match:
+            raise click.ClickException("Failed to parse analysis response")
+
+        xml_content = f"<output>{match.group(1)}</output>"
+        analysis = CodeSmellAnalysis(xml_content)
+        format_output(analysis, console)
+
+    except Exception as e:
+        raise click.ClickException(f"Error analyzing code: {str(e)}")
 
 @click.group()
 def cli():
@@ -116,7 +139,34 @@ def configure(api_key):
 
 
 @cli.command()
-def analyze():
+@click.option("--compare", default="main", help="Branch to compare to")
+def pr(compare):
+    """Analyze staged changes for code smells."""
+    console = Console()
+
+    # Get API key
+    api_key = get_api_key()
+    if not api_key:
+        raise click.ClickException(
+            "No API key found. Please run `configure` command first or set ANTHROPIC_API_KEY environment variable."
+        )
+
+    # Initialize Claude client
+    client = anthropic.Client(api_key=api_key)
+
+    # Get staged changes
+    current_branch = get_current_branch()
+    diff = get_diff(current_branch, compare)
+    if not diff:
+        raise click.ClickException("No staged changes found.")
+
+    # Generate analysis
+    with console.status("[bold cyan]Analyzing code smells...[/bold cyan]"):
+        generate_analysis(console, client, diff)
+
+
+@cli.command()
+def commit():
     """Analyze staged changes for code smells."""
     console = Console()
 
@@ -137,29 +187,7 @@ def analyze():
 
     # Generate analysis
     with console.status("[bold cyan]Analyzing code smells...[/bold cyan]"):
-        formatted_prompt = SYSTEM_PROMPT.replace("{{GIT_DIFF}}", diff)
-
-        try:
-            response = client.messages.create(
-                model="claude-3-sonnet-20241022",
-                max_tokens=2000,
-                temperature=0,
-                messages=[{"role": "user", "content": formatted_prompt}],
-            )
-
-            # Extract the XML output from the response
-            pattern = r"<output>(.*?)</output>"
-            match = re.search(pattern, response.content[0].text, re.DOTALL)
-            if not match:
-                raise click.ClickException("Failed to parse analysis response")
-
-            xml_content = f"<output>{match.group(1)}</output>"
-            analysis = CodeSmellAnalysis(xml_content)
-            format_output(analysis, console)
-
-        except Exception as e:
-            raise click.ClickException(f"Error analyzing code: {str(e)}")
-
+        generate_analysis(console,client,diff)
 
 if __name__ == "__main__":
     cli()
