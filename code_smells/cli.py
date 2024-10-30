@@ -108,7 +108,7 @@ def generate_analysis(console, client, diff):
                 messages=[{"role": "user", "content": formatted_prompt}],
             )
 
-            # Extract the XML output from the response
+        # Extract the XML output from the response
         pattern = r"<output>(.*?)</output>"
         match = re.search(pattern, response.content[0].text, re.DOTALL)
         if not match:
@@ -157,6 +157,7 @@ def pr(compare):
     # Get staged changes
     current_branch = get_current_branch()
     diff = get_diff(current_branch, compare)
+    print(f"\nDiff: {diff}")
     if not diff:
         raise click.ClickException("No staged changes found.")
 

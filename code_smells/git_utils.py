@@ -55,9 +55,9 @@ def get_diff(current_branch: str, compare_branch: str) -> str:
         output.append(f"\n=== File: {filename} ===")
         output.append(f"Status: {status}")
         
-        if status != 'D':  # If file wasn't deleted
-            output.append("\n=== Current File Content ===")
-            output.append(get_full_file_content(filename, current_branch))
+        # if status != 'D':  # If file wasn't deleted
+        #     output.append("\n=== Current File Content ===")
+        #     output.append(get_full_file_content(filename, current_branch))
             
         output.append("\n=== Changes ===")
         # Get word-diff for this specific file
