@@ -65,11 +65,6 @@ def get_diff(current_branch: str, compare_branch: str) -> str:
             file_diff = run_git_command(
                 f"git diff --word-diff=plain {compare_branch}...{current_branch} -- {filename}"
             )
-            # Make diff more readable
-            file_diff = (file_diff.replace("[-", "REMOVED:")
-                                .replace("-]", "")
-                                .replace("{+", "ADDED:")
-                                .replace("+}", ""))
             output.append(file_diff)
         except:
             output.append("(New file or binary file)")

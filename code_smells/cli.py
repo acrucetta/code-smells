@@ -40,15 +40,30 @@ def save_api_key(api_key: str):
 
 class CodeSmellAnalysis:
     def __init__(self, xml_content: str):
-        self.root = ET.fromstring(xml_content)
-
+        try:
+            self.root = ET.fromstring(xml_content)
+            self._validate_structure()
+        except ET.ParseError as e:
+            raise ValueError(f"Invalid XML format: {str(e)}")
+            
+    def _validate_structure(self):
+        required_elements = ['output', 'analysis_process']
+        for element in required_elements:
+            if self.root.find(f".//{element}") is None:
+                raise ValueError(f"Missing required element: {element}")
+                
     def get_flags(self) -> List[Dict[str, str]]:
         flags = []
         for flag in self.root.findall(".//flag"):
-            flag_dict = {}
-            for element in flag:
-                flag_dict[element.tag] = element.text.strip()
-            flags.append(flag_dict)
+            try:
+                flag_dict = {
+                    element.tag: element.text.strip() 
+                    for element in flag 
+                    if element.text
+                }
+                flags.append(flag_dict)
+            except AttributeError:
+                continue
         return flags
 
     def get_overall_assessment(self) -> str:
@@ -103,12 +118,13 @@ def generate_analysis(console, client, diff):
     try:
         response = client.messages.create(
                 model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
+                max_tokens=4000,
                 temperature=0,
                 messages=[{"role": "user", "content": formatted_prompt}],
             )
 
         # Extract the XML output from the response
+        print(f"\nResponse: {response.content[0].text}")
         pattern = r"<output>(.*?)</output>"
         match = re.search(pattern, response.content[0].text, re.DOTALL)
         if not match:
