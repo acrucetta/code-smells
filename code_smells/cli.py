@@ -69,16 +69,16 @@ def format_output(analysis: CodeSmellAnalysis, console: Console):
             panel = Panel(
                 f"""[bold red]⚠️  Issue:[/bold red] {flag['description']}
 
-                [bold yellow]📍 Location:[/bold yellow] {flag['location']}
+[bold yellow]📍 Location:[/bold yellow] {flag['location']}
 
-                [bold blue]💭 Explanation:[/bold blue]
-                {flag['explanation']}
+[bold blue]💭 Explanation:[/bold blue]
+{flag['explanation']}
 
-                [bold green]💡 Suggestion:[/bold green]
-                {flag['suggestion']}
+[bold green]💡 Suggestion:[/bold green]
+{flag['suggestion']}
 
-                [bold magenta]✨ Example Fix:[/bold magenta]
-                {flag['example_fix']}""",
+[bold magenta]✨ Example Fix:[/bold magenta]
+{flag['example_fix']}""",
                 title="[bold red]Code Smell Detected[/bold red]",
                 border_style="red",
             )
