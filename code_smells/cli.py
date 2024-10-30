@@ -117,20 +117,19 @@ def generate_analysis(console, client, diff):
     formatted_prompt = SYSTEM_PROMPT.replace("{{GIT_DIFF}}", diff)
     try:
         response = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=4000,
-                temperature=0,
-                messages=[{"role": "user", "content": formatted_prompt}],
-            )
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4000,
+            temperature=0,
+            messages=[{"role": "user", "content": formatted_prompt}],
+        )
 
         # Extract the XML output from the response
-        print(f"\nResponse: {response.content[0].text}")
         pattern = r"<output>(.*?)</output>"
         match = re.search(pattern, response.content[0].text, re.DOTALL)
         if not match:
             raise click.ClickException("Failed to parse analysis response")
 
-        xml_content = f"<output>{match.group(1)}</output>"
+        xml_content = match.group(0)  # Use the full match including the output tags
         analysis = CodeSmellAnalysis(xml_content)
         format_output(analysis, console)
 
