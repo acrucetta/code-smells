@@ -166,7 +166,6 @@ def pr(compare):
     # Get staged changes
     current_branch = get_current_branch()
     diff = get_diff(current_branch, compare)
-    print(f"\nDiff: {diff}")
     if not diff:
         raise click.ClickException("No staged changes found.")
 
