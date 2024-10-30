@@ -55,9 +55,9 @@ def get_diff(current_branch: str, compare_branch: str) -> str:
         output.append(f"\n=== File: {filename} ===")
         output.append(f"Status: {status}")
         
-        if status != 'D':  # If file wasn't deleted
-            output.append("\n=== Current File Content ===")
-            output.append(get_full_file_content(filename, current_branch))
+        # if status != 'D':  # If file wasn't deleted
+        #     output.append("\n=== Current File Content ===")
+        #     output.append(get_full_file_content(filename, current_branch))
             
         output.append("\n=== Changes ===")
         # Get word-diff for this specific file
@@ -65,11 +65,6 @@ def get_diff(current_branch: str, compare_branch: str) -> str:
             file_diff = run_git_command(
                 f"git diff --word-diff=plain {compare_branch}...{current_branch} -- {filename}"
             )
-            # Make diff more readable
-            file_diff = (file_diff.replace("[-", "REMOVED:")
-                                .replace("-]", "")
-                                .replace("{+", "ADDED:")
-                                .replace("+}", ""))
             output.append(file_diff)
         except:
             output.append("(New file or binary file)")

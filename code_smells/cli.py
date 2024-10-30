@@ -40,15 +40,23 @@ def save_api_key(api_key: str):
 
 class CodeSmellAnalysis:
     def __init__(self, xml_content: str):
-        self.root = ET.fromstring(xml_content)
-
+        try:
+            self.root = ET.fromstring(xml_content)
+        except ET.ParseError as e:
+            raise ValueError(f"Invalid XML format: {str(e)}")
+                
     def get_flags(self) -> List[Dict[str, str]]:
         flags = []
         for flag in self.root.findall(".//flag"):
-            flag_dict = {}
-            for element in flag:
-                flag_dict[element.tag] = element.text.strip()
-            flags.append(flag_dict)
+            try:
+                flag_dict = {
+                    element.tag: element.text.strip() 
+                    for element in flag 
+                    if element.text
+                }
+                flags.append(flag_dict)
+            except AttributeError:
+                continue
         return flags
 
     def get_overall_assessment(self) -> str:
@@ -102,19 +110,20 @@ def generate_analysis(console, client, diff):
     formatted_prompt = SYSTEM_PROMPT.replace("{{GIT_DIFF}}", diff)
     try:
         response = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                temperature=0,
-                messages=[{"role": "user", "content": formatted_prompt}],
-            )
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4000,
+            temperature=0,
+            messages=[{"role": "user", "content": formatted_prompt}],
+        )
 
-            # Extract the XML output from the response
+        # Extract the XML output from the response
         pattern = r"<output>(.*?)</output>"
         match = re.search(pattern, response.content[0].text, re.DOTALL)
         if not match:
             raise click.ClickException("Failed to parse analysis response")
 
-        xml_content = f"<output>{match.group(1)}</output>"
+        xml_content = match.group(0)
+        print(f"\nXML Content: {xml_content}\n")
         analysis = CodeSmellAnalysis(xml_content)
         format_output(analysis, console)
 
@@ -157,6 +166,7 @@ def pr(compare):
     # Get staged changes
     current_branch = get_current_branch()
     diff = get_diff(current_branch, compare)
+    print(f"\nDiff: {diff}")
     if not diff:
         raise click.ClickException("No staged changes found.")
 

@@ -58,7 +58,9 @@ Present your analysis in the following format:
 <explanation>Detailed explanation of why it's a problem</explanation>
 <suggestion>Recommendation for improvement</suggestion>
 <example_fix>
+<![CDATA[
 Small code example showing how to fix the issue
+]]>
 </example_fix>
 </flag>
 (Repeat the <flag> section for each red flag identified)
