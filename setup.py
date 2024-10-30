@@ -7,6 +7,7 @@ setup(
     install_requires=[
         'click',
         'anthropic',
+        'rich'
     ],
     entry_points={
         'console_scripts': [
