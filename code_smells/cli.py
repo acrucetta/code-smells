@@ -123,7 +123,6 @@ def generate_analysis(console, client, diff):
             raise click.ClickException("Failed to parse analysis response")
 
         xml_content = match.group(0)
-        print(f"\nXML Content: {xml_content}\n")
         analysis = CodeSmellAnalysis(xml_content)
         format_output(analysis, console)
 
@@ -166,7 +165,6 @@ def pr(compare):
     # Get staged changes
     current_branch = get_current_branch()
     diff = get_diff(current_branch, compare)
-    print(f"\nDiff: {diff}")
     if not diff:
         raise click.ClickException("No staged changes found.")
 
