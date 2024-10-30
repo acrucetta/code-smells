@@ -40,79 +40,37 @@ def save_api_key(api_key: str):
 
 class CodeSmellAnalysis:
     def __init__(self, xml_content: str):
-        """Initialize with XML content and handle code examples properly."""
         try:
-            # Try to parse with automatic CDATA wrapping first
-            self.root = self._safe_parse_xml(xml_content)
+            self.root = ET.fromstring(xml_content)
             self._validate_structure()
         except ET.ParseError as e:
             raise ValueError(f"Invalid XML format: {str(e)}")
-    
-    def _wrap_code_with_cdata(self, xml_string: str) -> str:
-        """Wrap code examples in CDATA sections to preserve special characters."""
-        def wrap_in_cdata(match: re.Match) -> str:
-            content = match.group(1)
-            if '<![CDATA[' in content:
-                return match.group(0)
-            return f'<example_fix><![CDATA[{content}]]></example_fix>'
-
-        # Replace content in example_fix tags with CDATA wrapped version
-        xml_string = re.sub(
-            r'<example_fix>(.*?)</example_fix>',
-            wrap_in_cdata,
-            xml_string,
-            flags=re.DOTALL
-        )
-        return xml_string
-
-    def _safe_parse_xml(self, xml_string: str) -> ET.Element:
-        """Safely parse XML string with multiple fallback strategies."""
-        try:
-            # First try parsing as-is
-            return ET.fromstring(xml_string)
-        except ET.ParseError as first_error:
-            try:
-                # If that fails, try wrapping code blocks with CDATA
-                wrapped_xml = self._wrap_code_with_cdata(xml_string)
-                return ET.fromstring(wrapped_xml)
-            except ET.ParseError as second_error:
-                # If both attempts fail, raise the original error
-                raise first_error
             
     def _validate_structure(self):
-        """Validate the required XML structure is present."""
         required_elements = ['output', 'analysis_process']
         for element in required_elements:
             if self.root.find(f".//{element}") is None:
                 raise ValueError(f"Missing required element: {element}")
                 
     def get_flags(self) -> List[Dict[str, str]]:
-        """Extract flags from XML, properly handling CDATA sections."""
         flags = []
         for flag in self.root.findall(".//flag"):
             try:
-                flag_dict = {}
-                for element in flag:
-                    if element.tag == 'example_fix':
-                        # Handle potential CDATA content
-                        text = element.text
-                        if text and '<![CDATA[' in text:
-                            text = text.replace('<![CDATA[', '').replace(']]>', '')
-                        flag_dict[element.tag] = text.strip() if text else ""
-                    else:
-                        flag_dict[element.tag] = element.text.strip() if element.text else ""
+                flag_dict = {
+                    element.tag: element.text.strip() 
+                    for element in flag 
+                    if element.text
+                }
                 flags.append(flag_dict)
             except AttributeError:
                 continue
         return flags
 
     def get_overall_assessment(self) -> str:
-        """Get the overall assessment from the XML."""
         assessment = self.root.find(".//overall_assessment")
         return assessment.text.strip() if assessment is not None else ""
 
     def has_red_flags(self) -> bool:
-        """Check if any red flags are present."""
         return len(self.root.findall(".//flag")) > 0
 
 
@@ -156,7 +114,6 @@ def format_output(analysis: CodeSmellAnalysis, console: Console):
     )
 
 def generate_analysis(console, client, diff):
-    """Generate analysis with improved XML handling."""
     formatted_prompt = SYSTEM_PROMPT.replace("{{GIT_DIFF}}", diff)
     try:
         response = client.messages.create(
@@ -166,20 +123,13 @@ def generate_analysis(console, client, diff):
             messages=[{"role": "user", "content": formatted_prompt}],
         )
 
-        # Extract the XML output from the response with improved pattern matching
-        print(f"\nResponse: {response.content[0].text}")
-
-        # Look for the complete output tag including its content
-        pattern = r"<output>.*?</output>"
+        # Extract the XML output from the response
+        pattern = r"<output>(.*?)</output>"
         match = re.search(pattern, response.content[0].text, re.DOTALL)
-            
         if not match:
-            raise click.ClickException("Failed to parse analysis response - no output tags found")
-        
-        print(f"\nMatch: {match.group(0)}")
-        xml_content = match.group(0)
-        
-        # Create analysis object with robust XML parsing
+            raise click.ClickException("Failed to parse analysis response")
+
+        xml_content = match.group(0)  # Use the full match including the output tags
         analysis = CodeSmellAnalysis(xml_content)
         format_output(analysis, console)
 
@@ -222,6 +172,7 @@ def pr(compare):
     # Get staged changes
     current_branch = get_current_branch()
     diff = get_diff(current_branch, compare)
+    print(f"\nDiff: {diff}")
     if not diff:
         raise click.ClickException("No staged changes found.")
 
