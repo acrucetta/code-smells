@@ -1,0 +1,11 @@
+setup.py
+code_smells/__init__.py
+code_smells/cli.py
+code_smells/constants.py
+code_smells/git_utils.py
+code_smells.egg-info/PKG-INFO
+code_smells.egg-info/SOURCES.txt
+code_smells.egg-info/dependency_links.txt
+code_smells.egg-info/entry_points.txt
+code_smells.egg-info/requires.txt
+code_smells.egg-info/top_level.txt

@@ -8,7 +8,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional
 import re
-from rich.console import Consolefr
+from rich.console import Console
 from rich.panel import Panel
 from rich.tree import Tree
 from rich.markdown import Markdown
