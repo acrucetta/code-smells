@@ -42,15 +42,8 @@ class CodeSmellAnalysis:
     def __init__(self, xml_content: str):
         try:
             self.root = ET.fromstring(xml_content)
-            self._validate_structure()
         except ET.ParseError as e:
             raise ValueError(f"Invalid XML format: {str(e)}")
-            
-    def _validate_structure(self):
-        required_elements = ['output', 'analysis_process']
-        for element in required_elements:
-            if self.root.find(f".//{element}") is None:
-                raise ValueError(f"Missing required element: {element}")
                 
     def get_flags(self) -> List[Dict[str, str]]:
         flags = []
@@ -129,7 +122,8 @@ def generate_analysis(console, client, diff):
         if not match:
             raise click.ClickException("Failed to parse analysis response")
 
-        xml_content = match.group(0)  # Use the full match including the output tags
+        xml_content = match.group(0)
+        print(f"\nXML Content: {xml_content}\n")
         analysis = CodeSmellAnalysis(xml_content)
         format_output(analysis, console)
 
